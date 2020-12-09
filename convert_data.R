@@ -6,8 +6,6 @@ library(imager)
 library(reticulate)
 source_python("resize_img.py")
 
-max_size_per_image_KB <- 500
-
 # list csvs
 data <- list.files("data", include.dirs = FALSE, full.names = T)
 data <- setdiff(data, c("data/metadata", "data/pictures"))
@@ -16,6 +14,7 @@ location <- read_csv("data/metadata/locations.csv")
 
 # a subset of locations
 subset <- 32
+max_size <- 200
 
 if(!dir.exists("data/pictures"))
   dir.create("data/pictures")
@@ -56,23 +55,23 @@ clean_fun_dl_pic <- function(d, loc)
    filename <- paste0("data/pictures/",
                       d$geo_id[row], "/",
                       d$id[row], ".jpg")
-   download.file(pull(d[row,"picture_url"]), destfile = filename, quiet = TRUE)
+   download.file(d[row,]$picture_url, destfile = filename, quiet = TRUE)
    
  }
  cat("Resizing images...\r")
- resize_img(paste0(getwd(),"/data/pictures/",d$geo_id[1],"/"), tuple(1000,1000))
+ resize_img(paste0(getwd(),"/data/pictures/",d$geo_id[1],"/"), tuple(max_size,max_size))
  
  d$picture_url <- NULL
  return(d)
  
 }
 
-for(i in 1:length(data[subset]))
+for(i in subset)
 {
   cat("#############################  ", i,"  #############################\r")
-  this_dat <- data[subset][i]
+  this_dat <- data[i]
   d <- read_csv(this_dat)
-  d <- clean_fun_dl_pic(d, location[subset,][i,])
+  d <- clean_fun_dl_pic(d, location[i,])
   write_csv(d, this_dat)
   
 }
